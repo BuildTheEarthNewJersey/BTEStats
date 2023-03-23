@@ -1,8 +1,35 @@
 package btestats.btestats.Events;
 
-public class RemoveBlockPlace {
-    /*TODO Implement:
-    1. Event registers when a block is broken. Check on the block called "owner" that stores uuid of user. If uuid matches, decrement counter. Otherwise, ignore.
-    2. Call Database function to remove block.
-     */
+import btestats.btestats.BTEStats;
+import btestats.btestats.Database.Players;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+
+public class RemoveBlockPlace implements Listener {
+
+    private final BTEStats plugin;
+
+    public RemoveBlockPlace(BTEStats plugin){
+        this.plugin = plugin;
+    }/**/
+
+    @EventHandler
+    private void onBlockBreak(BlockBreakEvent e){
+        Block block = e.getBlock();
+        Player player = e.getPlayer();
+        String uuid = player.getUniqueId().toString();
+        if (block.getMetadata("owner").size() == 0){
+            return;
+        }
+        String uuidMetadata = block.getMetadata("owner").get(0).asString();
+        if (!uuidMetadata.equals(uuid)){
+            Players.updateBlocksPlaced(uuidMetadata, -1);
+            return;
+        }
+        block.removeMetadata("owner", plugin);
+        Players.updateBlocksPlaced(uuid, -1);
+    }
 }
