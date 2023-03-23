@@ -14,9 +14,11 @@ import org.bukkit.metadata.FixedMetadataValue;
 public class AddBlockPlace implements Listener {
 
     private final BTEStats plugin;
+    private final Players playerDB;
 
-    public AddBlockPlace(BTEStats plugin){
+    public AddBlockPlace(BTEStats plugin, Players playerDB){
         this.plugin = plugin;
+        this.playerDB = playerDB;
     }
 
     @EventHandler
@@ -34,6 +36,6 @@ public class AddBlockPlace implements Listener {
 
         block.setMetadata("owner", new FixedMetadataValue(plugin, player.getUniqueId()));
         System.out.println("+1");
-        Players.updateBlocksPlaced(uuid, 1); //TODO
+        this.playerDB.updateBlocksPlaced(uuid, 1); //TODO
     }
 }

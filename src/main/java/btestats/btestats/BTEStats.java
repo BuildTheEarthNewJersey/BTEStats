@@ -3,6 +3,7 @@ package btestats.btestats;
 import btestats.btestats.Commands.GetPlayerStats;
 import btestats.btestats.Database.Players;
 import btestats.btestats.Mongo.MongoConnection;
+import com.mongodb.client.MongoDatabase;
 import org.bukkit.command.CommandExecutor;
 import btestats.btestats.Events.AddBlockPlace;
 import btestats.btestats.Events.RemoveBlockPlace;
@@ -20,17 +21,16 @@ public final class BTEStats extends JavaPlugin {
             4. Instantiate DB classes
             5. Instantiate and Register commands
          */
-        // Register Plugins
-        Bukkit.getServer().getPluginManager().registerEvents(new AddBlockPlace(this), this);
-        Bukkit.getServer().getPluginManager().registerEvents(new RemoveBlockPlace(this), this);
         
         // Plugin startup logic
         //Starts up a Mongo Connection and retrieves the database
         mongoURI = this.getConfig().getString("mongo-uri");
-        MongoConnection mongo = new MongoConnection(mongoURI);
-        mongo.getConnection();
-        Players playerDB = new Players(mongo.getConnection());
-        getCommand("test").setExecutor((CommandExecutor) new GetPlayerStats(playerDB));
+        MongoDatabase mongo = new MongoConnection(mongoURI).getConnection();
+
+        // Register Plugins
+        Bukkit.getServer().getPluginManager().registerEvents(new AddBlockPlace(this, new Players(mongo)), this);
+        Bukkit.getServer().getPluginManager().registerEvents(new RemoveBlockPlace(this, new Players(mongo)), this);
+
     }
 
     @Override

@@ -11,9 +11,11 @@ import org.bukkit.event.block.BlockBreakEvent;
 public class RemoveBlockPlace implements Listener {
 
     private final BTEStats plugin;
+    private final Players playerDB;
 
-    public RemoveBlockPlace(BTEStats plugin){
+    public RemoveBlockPlace(BTEStats plugin, Players playerDB){
         this.plugin = plugin;
+        this.playerDB = playerDB;
     }/**/
 
     @EventHandler
@@ -26,10 +28,10 @@ public class RemoveBlockPlace implements Listener {
         }
         String uuidMetadata = block.getMetadata("owner").get(0).asString();
         if (!uuidMetadata.equals(uuid)){
-            Players.updateBlocksPlaced(uuidMetadata, -1);
+            this.playerDB.updateBlocksPlaced(uuidMetadata, -1);
             return;
         }
         block.removeMetadata("owner", plugin);
-        Players.updateBlocksPlaced(uuid, -1);
+        this.playerDB.updateBlocksPlaced(uuid, -1);
     }
 }
