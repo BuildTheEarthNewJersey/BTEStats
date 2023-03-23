@@ -1,4 +1,7 @@
 package btestats.btestats.Mongo;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
 
 public class MongoConnection {
     /*TODO Implement:
@@ -7,4 +10,19 @@ public class MongoConnection {
     3. Database objects get passed into command objects
     4. Create function to start mongo connection and stop mongo connection
      */
+
+    private String mongoUri;
+    public MongoConnection(String mongoUri){
+        this.mongoUri=mongoUri;
+    }
+    public MongoDatabase getConnection(){
+        MongoClient client = MongoClients.create(mongoUri);
+        MongoDatabase database = client.getDatabase("BTEstats");
+        return database;
+    }
+
+
+
+
+
 }

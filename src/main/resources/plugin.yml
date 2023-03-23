@@ -2,6 +2,6 @@ name: BTEStats
 version: '${project.version}'
 main: btestats.btestats.BTEStats
 api-version: 1.15
-authors: [ gcarvellas, AeroThunder02 ]
+authors: [ gcarvellas, mkowalczyk570 ]
 description: Collects statistics for BTE services
 website: https://buildtheearth.net/bte-new-jersey

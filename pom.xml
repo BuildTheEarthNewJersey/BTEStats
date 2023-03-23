@@ -59,6 +59,10 @@
             <id>spigotmc-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
+        <repository>
+            <id>Mongo Maven Driver</id>
+            <url>https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -67,6 +71,11 @@
             <artifactId>bukkit</artifactId>
             <version>1.15.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>3.12.11</version>
         </dependency>
     </dependencies>
 </project>
