@@ -31,6 +31,5 @@ public class RemoveBlockPlace implements Listener {
         }
         block.removeMetadata("owner", plugin);
         Players.updateBlocksPlaced(uuid, -1);
-
     }
 }

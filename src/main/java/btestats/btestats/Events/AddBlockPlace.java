@@ -2,6 +2,8 @@ package btestats.btestats.Events;
 
 import btestats.btestats.BTEStats;
 import btestats.btestats.Database.Players;
+import java.util.List;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,14 +24,16 @@ public class AddBlockPlace implements Listener {
         Block block = e.getBlock();
         Player player = e.getPlayer();
         String uuid = player.getUniqueId().toString();
-        if (block.getMetadata("owner").size() != 0){
+
+        List<MetadataValue> owner = block.getMetadata("owner");
+
+        // If Block was placed by somebody else
+        if (owner.size() > 0 && owner.get(0).asString().equals(uuid)){
             return;
         }
-        String uuidMetadata = block.getMetadata("owner").get(0).asString();
-        if (uuidMetadata.equals(uuid)){
-            return;
-        }
+
         block.setMetadata("owner", new FixedMetadataValue(plugin, player.getUniqueId()));
-        Players.updateBlocksPlaced(uuid, 1);
+        System.out.println("+1");
+        Players.updateBlocksPlaced(uuid, 1); //TODO
     }
 }
