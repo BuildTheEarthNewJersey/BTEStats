@@ -35,7 +35,6 @@ public class AddBlockPlace implements Listener {
         }
 
         block.setMetadata("owner", new FixedMetadataValue(plugin, player.getUniqueId()));
-        System.out.println("+1");
         this.playerDB.updateBlocksPlaced(uuid, 1); //TODO
     }
 }

@@ -1,0 +1,15 @@
+whitelist.json
+usercahce.json
+permissions.yml
+ops.json
+help.yml
+commands.yml
+bukkit.yml
+banned-players.json
+banned-ips.json
+world/
+world_nether/
+world_the_end/
+logs/
+usercache.json
+server.jar
