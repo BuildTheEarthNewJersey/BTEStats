@@ -28,8 +28,8 @@ public final class BTEStats extends JavaPlugin {
         MongoDatabase mongo = new MongoConnection(mongoURI).getConnection();
 
         // Register Plugins
-        Bukkit.getServer().getPluginManager().registerEvents(new AddBlockPlace(this, new Players(mongo)), this);
-        Bukkit.getServer().getPluginManager().registerEvents(new RemoveBlockPlace(this, new Players(mongo)), this);
+        getServer().getPluginManager().registerEvents(new AddBlockPlace(this, new Players(mongo)), this);
+        getServer().getPluginManager().registerEvents(new RemoveBlockPlace(this, new Players(mongo)), this);
 
     }
 
