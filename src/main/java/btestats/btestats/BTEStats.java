@@ -1,13 +1,10 @@
 package btestats.btestats;
 
-import btestats.btestats.Commands.GetPlayerStats;
 import btestats.btestats.Database.Players;
 import btestats.btestats.Mongo.MongoConnection;
 import com.mongodb.client.MongoDatabase;
-import org.bukkit.command.CommandExecutor;
 import btestats.btestats.Events.AddBlockPlace;
 import btestats.btestats.Events.RemoveBlockPlace;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class BTEStats extends JavaPlugin {
@@ -30,6 +27,7 @@ public final class BTEStats extends JavaPlugin {
         // Register Plugins
         getServer().getPluginManager().registerEvents(new AddBlockPlace(this, new Players(mongo)), this);
         getServer().getPluginManager().registerEvents(new RemoveBlockPlace(this, new Players(mongo)), this);
+
 
     }
 

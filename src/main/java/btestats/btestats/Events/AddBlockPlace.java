@@ -2,7 +2,7 @@ package btestats.btestats.Events;
 
 import btestats.btestats.BTEStats;
 import btestats.btestats.Database.Players;
-import btestats.btestats.Events.handlers.OwnerPersistentStorageHandler;
+import btestats.btestats.Util.Blocks.BlockOwnerHistory;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -25,14 +25,14 @@ public class AddBlockPlace implements Listener {
         Player player = e.getPlayer();
         String uuid = player.getUniqueId().toString();
 
-        String owner = OwnerPersistentStorageHandler.get(plugin, block);
+        String owner = BlockOwnerHistory.get(plugin, block);
 
         // If Block was placed by somebody else
         if (owner != null && owner.equals(uuid)){
             return;
         }
 
-        OwnerPersistentStorageHandler.set(plugin, block, uuid);
+        BlockOwnerHistory.set(plugin, block, uuid);
 
         this.playerDB.updateBlocksPlaced(uuid, 1);
     }

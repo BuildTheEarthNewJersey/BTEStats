@@ -2,7 +2,7 @@ package btestats.btestats.Events;
 
 import btestats.btestats.BTEStats;
 import btestats.btestats.Database.Players;
-import btestats.btestats.Events.handlers.OwnerPersistentStorageHandler;
+import btestats.btestats.Util.Blocks.BlockOwnerHistory;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,7 +24,7 @@ public class RemoveBlockPlace implements Listener {
         Player player = e.getPlayer();
         String uuid = player.getUniqueId().toString();
 
-        String owner = OwnerPersistentStorageHandler.get(plugin, block);
+        String owner = BlockOwnerHistory.get(plugin, block);
 
         // Do not update if nobody broke the block
         if (owner == null){
@@ -37,7 +37,7 @@ public class RemoveBlockPlace implements Listener {
             return;
         }
 
-        OwnerPersistentStorageHandler.remove(plugin, block);
+        BlockOwnerHistory.remove(plugin, block);
         this.playerDB.updateBlocksPlaced(uuid, -1);
     }
 }
