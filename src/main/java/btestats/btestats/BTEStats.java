@@ -1,7 +1,10 @@
 package btestats.btestats;
 
+import btestats.btestats.Database.BlockOwnerCollection;
 import btestats.btestats.Database.Players;
+import btestats.btestats.Events.BlockOwnerCollectionFlush;
 import btestats.btestats.Mongo.MongoConnection;
+import btestats.btestats.Util.Blocks.BlockOwnerHistory;
 import com.mongodb.client.MongoDatabase;
 import btestats.btestats.Events.AddBlockPlace;
 import btestats.btestats.Events.RemoveBlockPlace;
@@ -9,6 +12,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class BTEStats extends JavaPlugin {
     private String mongoURI;
+    private BlockOwnerHistory blockOwnerHistory;
+    private BlockOwnerCollection blockOwnerCollection;
     @Override
     public void onEnable() {
         /* TODO
@@ -20,15 +25,17 @@ public final class BTEStats extends JavaPlugin {
          */
         
         // Plugin startup logic
+
         //Starts up a Mongo Connection and retrieves the database
         mongoURI = this.getConfig().getString("mongo-uri");
         MongoDatabase mongo = new MongoConnection(mongoURI).getConnection();
 
         // Register Plugins
-        getServer().getPluginManager().registerEvents(new AddBlockPlace(this, new Players(mongo)), this);
-        getServer().getPluginManager().registerEvents(new RemoveBlockPlace(this, new Players(mongo)), this);
-
-
+        blockOwnerCollection = new BlockOwnerCollection(mongo, this);
+        blockOwnerHistory = new BlockOwnerHistory(this, blockOwnerCollection);
+        getServer().getPluginManager().registerEvents(new AddBlockPlace( new Players(mongo), blockOwnerHistory), this);
+        getServer().getPluginManager().registerEvents(new RemoveBlockPlace(new Players(mongo), blockOwnerHistory), this);
+        getServer().getPluginManager().registerEvents(new BlockOwnerCollectionFlush(blockOwnerCollection), this);
     }
 
     @Override
