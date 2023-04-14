@@ -10,6 +10,8 @@ import org.bson.Document;
 import org.bukkit.Location;
 import org.bukkit.World;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -25,20 +27,30 @@ public class BlockOwnerCollection {
     private static final UpdateOptions UPSERT = new UpdateOptions().upsert(true);
 
     private final BTEStats plugin;
-    private ConcurrentHashMap<Location, String> buffer;
+    private HashMap<Location, String> addBuffer;
+    private HashSet<Location> removeBuffer;
+
+    private final Object BUFFER_MUX = new Object();
 
     public BlockOwnerCollection(MongoDatabase database, BTEStats plugin){
         this.collection = database.getCollection("blockOwnerCollection");
-        this.buffer = new ConcurrentHashMap<>();
+        this.addBuffer = new HashMap<>();
+        this.removeBuffer = new HashSet<>();
         this.plugin = plugin;
     }
 
     public void addToBuffer(Location location, String owner){
-        this.buffer.put(location, owner);
+        synchronized (BUFFER_MUX) {
+            this.removeBuffer.remove(location);
+            this.addBuffer.put(location, owner);
+        }
     }
 
     public void removeFromBuffer(Location location){
-        this.buffer.remove(location);
+        synchronized (BUFFER_MUX) {
+            this.addBuffer.remove(location);
+            this.removeBuffer.add(location);
+        }
     }
 
     private String locationToString(Location location){
@@ -84,10 +96,18 @@ public class BlockOwnerCollection {
         /*
         Flush buffer into DB and wipe buffer
          */
-        this.buffer.forEach((location, owner) ->
-                collection.updateOne(Filters.eq("_id", this.locationToString(location)), Updates.set(OWNER_KEY, owner), UPSERT)
-                );
-        this.buffer = new ConcurrentHashMap<>();
+        synchronized (BUFFER_MUX) {
+            this.removeBuffer.forEach((location) ->
+                    collection.deleteOne(Filters.eq("_id", this.locationToString(location)))
+            );
+
+            this.addBuffer.forEach((location, owner) ->
+                    collection.updateOne(Filters.eq("_id", this.locationToString(location)), Updates.set(OWNER_KEY, owner), UPSERT)
+            );
+
+            this.addBuffer = new HashMap<>();
+            this.removeBuffer = new HashSet<>();
+        }
     }
 
     
