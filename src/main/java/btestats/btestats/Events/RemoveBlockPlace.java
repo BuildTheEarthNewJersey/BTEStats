@@ -1,21 +1,19 @@
 package btestats.btestats.Events;
-
-import btestats.btestats.BTEStats;
 import btestats.btestats.Database.Players;
+import btestats.btestats.Util.Blocks.BlockOwnerHistory;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-
 public class RemoveBlockPlace implements Listener {
-
-    private final BTEStats plugin;
     private final Players playerDB;
 
-    public RemoveBlockPlace(BTEStats plugin, Players playerDB){
-        this.plugin = plugin;
+    private final BlockOwnerHistory blockOwnerHistory;
+
+    public RemoveBlockPlace(Players playerDB, BlockOwnerHistory blockOwnerHistory){
         this.playerDB = playerDB;
+        this.blockOwnerHistory = blockOwnerHistory;
     }/**/
 
     @EventHandler
@@ -23,15 +21,21 @@ public class RemoveBlockPlace implements Listener {
         Block block = e.getBlock();
         Player player = e.getPlayer();
         String uuid = player.getUniqueId().toString();
-        if (block.getMetadata("owner").size() == 0){
+
+        String owner = this.blockOwnerHistory.get(block);
+
+        // Do not update if nobody broke the block
+        if (owner == null){
             return;
         }
-        String uuidMetadata = block.getMetadata("owner").get(0).asString();
-        if (!uuidMetadata.equals(uuid)){
-            this.playerDB.updateBlocksPlaced(uuidMetadata, -1);
+
+        // Another user breaks someone else's block
+        if (!owner.equals(uuid)){
+            this.playerDB.updateBlocksPlaced(uuid, -1);
             return;
         }
-        block.removeMetadata("owner", plugin);
+
+        this.blockOwnerHistory.remove(block);
         this.playerDB.updateBlocksPlaced(uuid, -1);
     }
 }

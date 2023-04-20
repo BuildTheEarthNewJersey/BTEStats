@@ -14,3 +14,9 @@ logs/
 usercache.json
 server.jar
 server.properties
+CustomJAVA/
+config/
+mohist-config/
+paper.yml
+plugins/
+spigot.yml
