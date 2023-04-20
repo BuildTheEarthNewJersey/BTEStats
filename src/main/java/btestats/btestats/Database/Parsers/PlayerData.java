@@ -23,4 +23,5 @@ public class PlayerData {
         this.loginStreak = loginStreak;
 
     }
+
 }

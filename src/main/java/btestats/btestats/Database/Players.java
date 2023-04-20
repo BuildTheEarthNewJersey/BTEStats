@@ -1,9 +1,6 @@
 package btestats.btestats.Database;
 
 
-import com.google.common.collect.Iterators;
-import com.mongodb.BasicDBObject;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import btestats.btestats.Database.Parsers.PlayerData;
@@ -12,16 +9,28 @@ import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import java.util.Date;
-import java.util.Iterator;
+import java.util.HashMap;
 
 
-public class Players {
+public class Players implements Bufferable{
 
     private MongoCollection<Document> collection;
+
+    private HashMap<String, PlayerData> playerBuffer;
+
+    private final Object BUFFER_MUX = new Object();
+
+    private HashMap<String, Integer> addBuffer;
+
     public Players(MongoDatabase database){
         this.collection= database.getCollection("players");
+        playerBuffer = new HashMap<>();
+        addBuffer = new HashMap<>();
     }
+
+
+
+
     /*TODO Implement:
     1. Add block place, remove block place function (increments db object and adds 1)
     1.5 adding blocksPlaced and removed blocksPlaced will first go through a queue, and after ever minute (or the queue gets full), the DB insert will then happen. This is to avoid overloading the DB. Also, add shutdown event to flush queue into DB.
@@ -36,22 +45,13 @@ public class Players {
     Note: EVERY DB CALL MUST FIRST GO THROUGH VALIDATION
      */
     private PlayerData getPlayer(String uuid){
-//        BasicDBObject whereQuery = new BasicDBObject();
-//        whereQuery.put("_id", uuid);
-//        Iterator<Document> it = this.collection.find(whereQuery).iterator();
-//        int size = Iterators.size(it);
-//        if (size == 0){
-//            throw new IllegalArgumentException("No player found");
-//        }
-//        else if (size > 1){
-//            throw new IllegalArgumentException("Duplicate player found");
-//        }
-//      Document result = it.next();
-
+        if (playerBuffer.containsKey(uuid)){
+            return playerBuffer.get(uuid);
+        }
         Bson query = Filters.eq("_id", uuid);
         Document document = this.collection.find(query).first();
         if (document == null) {
-            createPlayer(uuid);
+            addPlayerToDB(uuid);
             document = this.collection.find(query).first();
         }
         int blocksPlaced = (int) document.get("blocksPlaced");
@@ -60,22 +60,15 @@ public class Players {
 
 
         return new PlayerData(uuid, blocksPlaced, lastLogin, loginStreak);
-
-
-    }
-    public void updateBlocksPlaced(String uuid, int quantity){
-        PlayerData player = getPlayer(uuid);
-        int blocksPlaced = player.blocksPlaced+quantity;
-        collection.updateOne(Filters.eq("_id", uuid), Updates.set("blocksPlaced", blocksPlaced));
     }
 
-    public void updateLoginStreak(String uuid) {
-        PlayerData player = getPlayer(uuid);
-        int loginStreak = player.loginStreak + 1;
-        collection.updateOne(Filters.eq("_id", uuid), Updates.set("loginStreak", loginStreak));
+    public PlayerData createPlayer(String uuid){
+        return new PlayerData(uuid, 1, System.currentTimeMillis(), 0);
     }
-
-    public void createPlayer(String uuid){
+    public void addPlayerToBuffer(String uuid){
+        playerBuffer.put(uuid, createPlayer(uuid));
+    }
+    public void addPlayerToDB(String uuid){
         Document player = new Document();
         long timeStamp = System.currentTimeMillis();
         player.append("_id", uuid);
@@ -86,6 +79,26 @@ public class Players {
     }
 
 
+    public void updateBlocksPlaced(String uuid, int quantity){
+
+        synchronized (BUFFER_MUX){
+            this.addBuffer.put(uuid, quantity);
+        }
+
+//        PlayerData player = getPlayer(uuid);
+//        int blocksPlaced = player.blocksPlaced+quantity;
+//        collection.updateOne(Filters.eq("_id", uuid), Updates.set("blocksPlaced", blocksPlaced));
+    }
+    @Override
+    public void flush() {
+        synchronized (BUFFER_MUX){
+            this.addBuffer.forEach((uuid, quantity) -> {
+                PlayerData player = getPlayer(uuid);
+                int blocksPlaced = player.blocksPlaced+quantity;
+                collection.updateOne(Filters.eq("_id", uuid), Updates.set("blocksPlaced", blocksPlaced));
+            });
+        }
+    }
 }
 
 
