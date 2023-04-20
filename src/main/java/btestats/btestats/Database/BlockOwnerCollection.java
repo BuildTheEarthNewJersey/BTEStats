@@ -7,6 +7,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bukkit.Location;
 import org.bukkit.World;
 import java.util.Arrays;
@@ -21,9 +22,13 @@ public class BlockOwnerCollection {
      * Handles database call for Block Owner History
      */
     private final MongoCollection<Document> collection;
-    private static final String OWNER_KEY = "owner";
-    private static final char UNIT_SEPARATOR = 0x1E;
+    private static final String WORLD_KEY = "world";
 
+    private static final String OWNER_KEY = "owner";
+    private static final String X_KEY = "x";
+    private static final String Y_KEY = "y";
+
+    private static final String Z_KEY = "z";
     private static final UpdateOptions UPSERT = new UpdateOptions().upsert(true);
 
     private final BTEStats plugin;
@@ -53,28 +58,6 @@ public class BlockOwnerCollection {
         }
     }
 
-    private String locationToString(Location location){
-        return location.getWorld().getName() + UNIT_SEPARATOR + location.getBlockX() + UNIT_SEPARATOR + location.getBlockY() + UNIT_SEPARATOR + location.getBlockZ() + UNIT_SEPARATOR + location.getPitch() + UNIT_SEPARATOR + location.getYaw();
-    }
-
-    private Location stringToLocation(String locationString){
-        List<String> separatedString = Arrays.asList(locationString.split(String.valueOf(UNIT_SEPARATOR)));
-
-        if (separatedString.size() != 6){
-            throw new IllegalArgumentException("Invalid location string: " + locationString);
-        }
-
-        World world = this.plugin.getServer().getWorld(separatedString.get(0));
-        double x = Double.parseDouble(separatedString.get(1));
-        double y = Double.parseDouble(separatedString.get(2));
-        double z = Double.parseDouble(separatedString.get(3));
-        float pitch = Float.parseFloat(separatedString.get(4));
-        float yaw = Float.parseFloat(separatedString.get(5));
-
-        return new Location(world, x, y, z, pitch, yaw);
-
-    }
-
     public ConcurrentHashMap<Location, String> get(){
         /*
         Gets all entries from DB
@@ -86,10 +69,27 @@ public class BlockOwnerCollection {
 
         ConcurrentHashMap<Location, String> result = new ConcurrentHashMap<>();
         collection.find().forEach((Consumer<? super Document>) (document) ->
-                result.put(this.stringToLocation(document.get("_id").toString()), document.get(OWNER_KEY).toString())
+                result.put(
+                        new Location(
+                                this.plugin.getServer().getWorld(document.get(WORLD_KEY).toString()),
+                                (Double) document.get(X_KEY),
+                                (Double) document.get(Y_KEY),
+                                (Double) document.get(Z_KEY)
+                        ),
+                        document.get(OWNER_KEY).toString()
+                )
         );
 
         return result;
+    }
+
+    private static Bson generateLocationFilter(Location location){
+        return Filters.and(
+                Filters.eq(WORLD_KEY, location.getWorld().getName()),
+                Filters.eq(X_KEY, location.getX()),
+                Filters.eq(Y_KEY, location.getY()),
+                Filters.eq(Z_KEY, location.getZ())
+        );
     }
 
     public void flush(){
@@ -98,11 +98,13 @@ public class BlockOwnerCollection {
          */
         synchronized (BUFFER_MUX) {
             this.removeBuffer.forEach((location) ->
-                    collection.deleteOne(Filters.eq("_id", this.locationToString(location)))
+                    collection.deleteOne(
+                            BlockOwnerCollection.generateLocationFilter(location)
+                    )
             );
 
             this.addBuffer.forEach((location, owner) ->
-                    collection.updateOne(Filters.eq("_id", this.locationToString(location)), Updates.set(OWNER_KEY, owner), UPSERT)
+                    collection.updateOne(BlockOwnerCollection.generateLocationFilter(location), Updates.set(OWNER_KEY, owner), UPSERT)
             );
 
             this.addBuffer = new HashMap<>();
