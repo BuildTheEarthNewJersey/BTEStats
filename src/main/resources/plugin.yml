@@ -1,6 +1,6 @@
 name: BTEStats
 version: '${project.version}'
-main: btestats.btestats.BTEStats
+main: net.btenj.btestats.BTEStats
 api-version: 1.15
 authors: [ gcarvellas, mkowalczyk570 ]
 description: Collects statistics for BTE services
