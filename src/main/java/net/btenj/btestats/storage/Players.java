@@ -11,6 +11,8 @@ import org.bson.conversions.Bson;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import static net.btenj.btestats.storage.mongodb.MongoConnection.MONGO_ID_STRING;
+
 
 public class Players implements Bufferable{
 
@@ -53,7 +55,7 @@ public class Players implements Bufferable{
             addPlayerToBuffer(uuid);
         }
 
-        Bson query = Filters.eq("_id", uuid);
+        Bson query = Filters.eq(MONGO_ID_STRING, uuid);
         Document document = this.collection.find(query).first();
         if (document == null) {
             addPlayerToDB(uuid);
@@ -76,7 +78,7 @@ public class Players implements Bufferable{
     public void addPlayerToDB(String uuid){
         Document player = new Document();
         long timeStamp = System.currentTimeMillis();
-        player.append("_id", uuid);
+        player.append(MONGO_ID_STRING, uuid);
         player.append(BLOCKS_PLACED_KEY, 0);
         player.append(LAST_LOGIN_KEY, timeStamp);
         player.append(LOGIN_STREAK_KEY, 0);
@@ -95,7 +97,7 @@ public class Players implements Bufferable{
     public void flush() {
         this.addBuffer.forEach((uuid, quantity) -> {
             PlayerData player = getPlayer(uuid);
-            collection.updateOne(Filters.eq("_id", uuid), Updates.set(BLOCKS_PLACED_KEY, player.blocksPlaced + quantity));
+            collection.updateOne(Filters.eq(MONGO_ID_STRING, uuid), Updates.set(BLOCKS_PLACED_KEY, player.blocksPlaced + quantity));
         });
 
         this.addBuffer = new ConcurrentHashMap<>();

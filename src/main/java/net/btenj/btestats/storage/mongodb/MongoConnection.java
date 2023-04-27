@@ -4,6 +4,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 
 public class MongoConnection {
+
     /*TODO Implement:
     1. Mongo DB Connection, where mongo db url and auth is in the plugin config file
     2. BTEStats.java calls Mongo DB Connection and passes the mongo object into other database objects
@@ -11,6 +12,7 @@ public class MongoConnection {
     4. Create function to start mongo connection and stop mongo connection
      */
 
+    public static final String MONGO_ID_STRING = "_id";
     private String mongoUri;
     public MongoConnection(String mongoUri){
         this.mongoUri=mongoUri;
