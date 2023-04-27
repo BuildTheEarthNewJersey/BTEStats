@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-public class BlockOwnerCollection {
+public class BlockOwnerCollection implements Bufferable {
     /*
      * Handles database call for Block Owner History
      */

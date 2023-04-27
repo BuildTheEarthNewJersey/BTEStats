@@ -14,6 +14,8 @@ public final class BTEStats extends JavaPlugin {
     private String mongoURI;
     private BlockOwnerHistory blockOwnerHistory;
     private BlockOwnerCollection blockOwnerCollection;
+
+    private Players players;
     @Override
     public void onEnable() {
         /* TODO
@@ -31,11 +33,13 @@ public final class BTEStats extends JavaPlugin {
         MongoDatabase mongo = new MongoConnection(mongoURI).getConnection();
 
         // Register Plugins
+
         blockOwnerCollection = new BlockOwnerCollection(mongo, this);
         blockOwnerHistory = new BlockOwnerHistory(this, blockOwnerCollection);
-        getServer().getPluginManager().registerEvents(new AddBlockPlace( new Players(mongo), blockOwnerHistory), this);
-        getServer().getPluginManager().registerEvents(new RemoveBlockPlace(new Players(mongo), blockOwnerHistory), this);
-        getServer().getPluginManager().registerEvents(new BlockOwnerCollectionFlush(blockOwnerCollection), this);
+        players = new Players(mongo);
+        getServer().getPluginManager().registerEvents(new AddBlockPlace( players, blockOwnerHistory), this);
+        getServer().getPluginManager().registerEvents(new RemoveBlockPlace(players, blockOwnerHistory), this);
+        getServer().getPluginManager().registerEvents(new BlockOwnerCollectionFlush(blockOwnerCollection, players), this);
     }
 
     @Override
