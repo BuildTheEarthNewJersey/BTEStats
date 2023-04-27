@@ -10,22 +10,25 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class Players implements Bufferable{
 
     private MongoCollection<Document> collection;
 
-    private HashMap<String, PlayerData> playerBuffer;
+    private ConcurrentHashMap<String, PlayerData> playerBuffer;
+    private static final String BLOCKS_PLACED_KEY = "blocksPlaced";
+    private static final String LAST_LOGIN_KEY = "lastLogin";
+    private static final String LOGIN_STREAK_KEY = "loginStreak";
 
-    private final Object BUFFER_MUX = new Object();
-
-    private HashMap<String, Integer> addBuffer;
+    private ConcurrentHashMap<String, Integer> addBuffer;
 
     public Players(MongoDatabase database){
         this.collection= database.getCollection("players");
-        playerBuffer = new HashMap<>();
-        addBuffer = new HashMap<>();
+        playerBuffer = new ConcurrentHashMap<>();
+        addBuffer = new ConcurrentHashMap<>();
     }
 
 
@@ -48,15 +51,19 @@ public class Players implements Bufferable{
         if (playerBuffer.containsKey(uuid)){
             return playerBuffer.get(uuid);
         }
+        else{
+            addPlayerToBuffer(uuid);
+        }
+
         Bson query = Filters.eq("_id", uuid);
         Document document = this.collection.find(query).first();
         if (document == null) {
             addPlayerToDB(uuid);
             document = this.collection.find(query).first();
         }
-        int blocksPlaced = (int) document.get("blocksPlaced");
-        long lastLogin = (long) document.get("lastLogin");
-        int loginStreak = (int) document.get("loginStreak");
+        int blocksPlaced = (int) document.get(BLOCKS_PLACED_KEY);
+        long lastLogin = (long) document.get(LAST_LOGIN_KEY);
+        int loginStreak = (int) document.get(LOGIN_STREAK_KEY);
 
 
         return new PlayerData(uuid, blocksPlaced, lastLogin, loginStreak);
@@ -72,32 +79,29 @@ public class Players implements Bufferable{
         Document player = new Document();
         long timeStamp = System.currentTimeMillis();
         player.append("_id", uuid);
-        player.append("blocksPlaced", 0);
-        player.append("lastLogin", timeStamp);
-        player.append("loginStreak", 0);
+        player.append(BLOCKS_PLACED_KEY, 0);
+        player.append(LAST_LOGIN_KEY, timeStamp);
+        player.append(LOGIN_STREAK_KEY, 0);
         collection.insertOne(player);
     }
 
-
     public void updateBlocksPlaced(String uuid, int quantity){
-
-        synchronized (BUFFER_MUX){
+        if(!this.addBuffer.containsKey((uuid))){
             this.addBuffer.put(uuid, quantity);
         }
-
-//        PlayerData player = getPlayer(uuid);
-//        int blocksPlaced = player.blocksPlaced+quantity;
-//        collection.updateOne(Filters.eq("_id", uuid), Updates.set("blocksPlaced", blocksPlaced));
+        else{
+            this.addBuffer.put(uuid, this.addBuffer.get(uuid)+quantity);
+        }
     }
     @Override
     public void flush() {
-        synchronized (BUFFER_MUX){
-            this.addBuffer.forEach((uuid, quantity) -> {
-                PlayerData player = getPlayer(uuid);
-                int blocksPlaced = player.blocksPlaced+quantity;
-                collection.updateOne(Filters.eq("_id", uuid), Updates.set("blocksPlaced", blocksPlaced));
-            });
-        }
+        this.addBuffer.forEach((uuid, quantity) -> {
+            PlayerData player = getPlayer(uuid);
+            collection.updateOne(Filters.eq("_id", uuid), Updates.set(BLOCKS_PLACED_KEY, player.blocksPlaced + quantity));
+        });
+
+        this.addBuffer = new ConcurrentHashMap<>();
+        this.playerBuffer = new ConcurrentHashMap<>();
     }
 }
 
