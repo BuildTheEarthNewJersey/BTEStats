@@ -1,7 +1,7 @@
 package net.btenj.btestats.commands;
 
 public class GetBlocksPlacedLeaderboard {
-    /* TODO Implement
+  /* TODO Implement
     Generates leaderboard of most blocks placed.
 
      */

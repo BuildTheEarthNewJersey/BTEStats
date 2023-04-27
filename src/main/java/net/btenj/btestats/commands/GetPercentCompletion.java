@@ -1,7 +1,7 @@
 package net.btenj.btestats.commands;
 
 public class GetPercentCompletion {
-    /* TODO Implement
+  /* TODO Implement
     Generate percentage of map completed
      */
 }
